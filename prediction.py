@@ -15,11 +15,25 @@ from pathlib import Path
 
 load_dotenv()
 
-# Initialize OpenAI client for LLM
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-)
+client = None
+
+def get_client():
+    global client
+
+    if client is None:
+        api_key = os.getenv("OPENROUTER_API_KEY")
+
+        if not api_key:
+            raise ValueError(
+                "OPENROUTER_API_KEY not found. Add it in Streamlit Secrets."
+            )
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+
+    return client
 
 # Load trained model components
 MODEL_DIR = Path(__file__).parent
@@ -181,7 +195,7 @@ Please provide a comprehensive medical report including:
 Keep the response professional and clear for both medical and non-medical readers."""
 
     try:
-        response = client.chat.completions.create(
+        response = get_client().chat.completions.create(
             model="meta-llama/llama-3.1-8b-instruct",
             messages=[
                 {"role": "user", "content": prompt}
@@ -245,7 +259,7 @@ Please provide:
 DISCLAIMER: These are general recommendations only. Always consult with a qualified healthcare provider for personalized medical advice and prescriptions."""
 
     try:
-        response = client.chat.completions.create(
+        response = get_client().chat.completions.create(
             model="meta-llama/llama-3.1-8b-instruct",
             messages=[
                 {"role": "user", "content": prompt}
